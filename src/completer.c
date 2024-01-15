@@ -65,6 +65,8 @@ static const char *g_commands[] = {
     "param_set",
     "param_get",
     "param_monitor",
+    "params",
+    "param_desc",
     "patch_set",
     "licensee",
     "set_bpm",
@@ -323,6 +325,24 @@ static char **completion(const char *text, int start, int end)
                      strcmp(cmd[0], "midi_unmap") == 0 ||
                      strcmp(cmd[0], "cc_unmap") == 0 ||
                      strcmp(cmd[0], "cv_unmap") == 0)
+            {
+                if (count == 1)
+                {
+                    get_instances = 1;
+                }
+                else if (count == 2)
+                {
+                    get_symbols = 1;
+                }
+            }
+            else if (strcmp(cmd[0], "params") == 0)
+            {
+                if (count == 1) 
+                { 
+                    get_instances = 1;
+                }
+            }
+             else if (strcmp(cmd[0], "param_desc") == 0)
             {
                 if (count == 1)
                 {

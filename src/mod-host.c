@@ -213,6 +213,70 @@ static void effects_get_param_cb(proto_t *proto)
 
     protocol_response(buffer, proto);
 }
+static void effects_desc_param_cb(proto_t *proto) 
+{
+   int resp;
+
+    const char ** scale_points = (const char **) calloc(256, sizeof(char *));
+
+    /* Allocates memory to parameter range */
+    const float **param_range = (float **) calloc(4, sizeof(float *));
+    param_range[0] = (float *) malloc(sizeof(float));
+    param_range[1] = (float *) malloc(sizeof(float));
+    param_range[2] = (float *) malloc(sizeof(float));
+    param_range[3] = (float *) malloc(sizeof(float));
+
+    resp = effects_get_parameter_info(atoi(proto->list[1]), proto->list[2],param_range, scale_points);
+
+    char buffer[1024];
+    if (resp >= 0) {
+        sprintf(buffer, "resp %i",resp);
+        sprintf(buffer+strlen(buffer), " def: %.03f, min: %.03f, max: %.03f, curr: %.03f", *param_range[0], *param_range[1], *param_range[2], *param_range[3]);
+        if (scale_points[0]) 
+        {
+            uint32_t i;
+            sprintf(buffer+strlen(buffer), "scale points:");
+            for (i = 0; scale_points[i]; i+=2)
+            {
+                sprintf(buffer+strlen(buffer)," %s: %s", scale_points[i], scale_points[i+1]);
+            }
+        }
+    }
+    else {
+        sprintf(buffer, "resp %i", resp);
+    }
+
+    free(param_range[0]);
+    free(param_range[1]);
+    free(param_range[2]);
+    free(param_range[3]);
+    free(param_range);
+    
+    free(scale_points);
+    protocol_response(buffer, proto); 
+}
+static void effects_params_cb(proto_t *proto)
+{
+    int resp;
+    const char **symbols = (const char **) calloc(128, sizeof(char *));
+
+    resp = effects_get_parameter_symbols(atoi(proto->list[1]), 0, symbols);
+
+    char buffer[1024];
+
+   
+    if (resp >= 0) {
+        sprintf(buffer, "resp %i",resp);
+        for(int j=0; j< strarr_length(symbols); j++) {
+            sprintf(buffer+strlen(buffer), " %s", symbols[j]);
+        }
+    }
+    else
+        sprintf(buffer, "resp %i", resp);
+
+    free(symbols);
+    protocol_response(buffer, proto);
+}
 
 static void effects_monitor_param_cb(proto_t *proto)
 {
@@ -683,6 +747,8 @@ static int mod_host_init(jack_client_t* client, int socket_port, int feedback_po
     protocol_add_command(EFFECT_PARAM_SET, effects_set_param_cb);
     protocol_add_command(EFFECT_PARAM_GET, effects_get_param_cb);
     protocol_add_command(EFFECT_PARAM_MON, effects_monitor_param_cb);
+    protocol_add_command(EFFECT_PARAM_DESC, effects_desc_param_cb);
+    protocol_add_command(EFFECT_PARAMS, effects_params_cb);
     protocol_add_command(EFFECT_PATCH_GET, effects_get_property_cb);
     protocol_add_command(EFFECT_PATCH_SET, effects_set_property_cb);
     protocol_add_command(EFFECT_LICENSEE, effects_licensee_cb);
